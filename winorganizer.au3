@@ -3,6 +3,8 @@
 
 ConsoleWrite("Start" & @CRLF)
 
+HotKeySet("^+{w}", "resetPositions")
+
 
 Local $titles = IniReadSection("winorganizer.ini", "Windows")
 
@@ -12,10 +14,18 @@ Global $heightMargin = 50
 Global $widthOverlap = 100
 Const $positionsSize = 10
 
+
+
+
 Global $winPositions[$positionsSize+1]
-For $i = 1 To $positionsSize
-	$winPositions[$i] = 0
-Next
+Func resetPositions()
+	;MsgBox(0, "You pressed CTRL+Shift+q", "You pressed CTRL+Shift+q")
+    For $i = 1 To $positionsSize
+		$winPositions[$i] = 0
+	Next
+EndFunc
+resetPositions()
+
 
 While 1
 	; Get a list of all windows
