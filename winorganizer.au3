@@ -10,12 +10,17 @@ Global $bottomMargin = 35
 Global $totalHeight = @DesktopHeight-$bottomMargin
 Global $heightMargin = 50
 Global $widthOverlap = 50
-Global $winHandles[1]
+Const $positionsSize = 10
+
+Global $winPositions[$positionsSize+1]
+For $i = 1 To $positionsSize
+	$winPositions[$i] = 0
+Next
 
 While 1
 	; Get a list of all windows
 	Local $winList = WinList()
-	ReDim $winHandles[1]
+	Local $winHandles[0]
 	Local $count = 0
 
 	; Loop through the list
@@ -28,6 +33,47 @@ While 1
 			EndIf
 		Next
 	Next
+	ConsoleWrite ("Found matches: " & $count & @CRLF)
+
+	; Remove closed windows
+	For $i = 1 To $positionsSize
+		If _ArraySearch ( $winHandles, $winPositions[$i] ) = -1 Then
+			$winPositions[$i] = 0
+			ConsoleWrite("Window Closed" & @CRLF)
+		EndIf
+	Next
+
+
+	; Add new windows to empty spaces in array
+	For $i = 1 To $count
+		Local $posIndex = _ArraySearch ( $winPositions, $winHandles[$i],1  )
+		If  $posIndex = -1 Then
+			$posIndex = _ArraySearch ( $winPositions, 0, 1 )
+			if $posIndex = -1 Then
+				ConsoleWrite("Empty space not found for new window"& @CRLF)
+				ContinueLoop
+			EndIf
+			ConsoleWrite ("Adding window , " & $posIndex & @CRLF)
+			$winPositions[$posIndex] = $winHandles[$i]
+		EndIf
+	Next
+
+	; Get Last used position
+	Local $maxPosition = -1
+	For $i = 1 To $positionsSize
+		If $winPositions[$i] <> 0 Then
+			$maxPosition = $i
+		EndIf
+	Next
+
+	ConsoleWrite ("Max position: " & $maxPosition & @CRLF)
+
+	ConsoleWrite ("Titles:")
+	For $i = 1 To $count
+		ConsoleWrite (" " & WinGetTitle($winPositions[$i]))
+	Next
+	ConsoleWrite (@CRLF)
+
 
 	;For $j = 1 To $count
 	;    ConsoleWrite("Handle " & WinGetTitle($winHandles[$j]) & " → Title: " & $title & @CRLF)
@@ -39,39 +85,48 @@ While 1
 		ExitLoop
 	EndIf
 
-	Global $widthStep = @DesktopWidth / $count
-	Global $rows = 2
-
-	If $count < 3 Then
-		For $j = 1 To $count
-			WinMove($winHandles[$j], "", ( $j-1) * $widthStep,0,$widthStep,$totalHeight)
-		Next
-	Else
-		Local $windowsPerRow = Int($count / $rows)
-		If Mod($count, 2) = 1 Then
-			$windowsPerRow += 1
-		EndIf
-		$widthStep = @DesktopWidth / $windowsPerRow
-		Local $heightStep = $totalHeight / $rows
-		Local $winHeight = $totalHeight / $rows
-
-		For $j = 1 To $count
-			Local $currentRow = Int( $j / $windowsPerRow - 0.1)
-			Local $xPosAdjustment = $widthOverlap / $windowsPerRow
-			;ConsoleWrite("Row: " & $j  & ", " & $windowsPerRow & @CRLF)
-			Local $rowIndex = $j -1
-			if $j >= $windowsPerRow Then
-				$rowIndex = $j - $currentRow*$windowsPerRow -1
-			EndIf
-			Local $posx = ( $j-1 - ($currentRow * ($windowsPerRow))) * $widthStep - ($rowIndex * $xPosAdjustment)
-			;ConsoleWrite("PosX: " & $posx  & ", " & $currentRow & ", " & $windowsPerRow & @CRLF)
-			Local $posy =  $currentRow * $heightStep - ($currentRow * $heightMargin)
-			Local $height = $winHeight + $heightMargin
-			Local $width = $widthStep + $widthOverlap
-			WinMove($winHandles[$j], "",$posx , $posy,$width,$height)
-			ConsoleWrite("Move To: " & $posx  & ", " & $posy & " row: " & $currentRow & @CRLF)
-		Next
+	Local $gridcount = $maxPosition
+	If  $gridcount < 4 Then
+		$gridcount = 4
 	EndIf
 
+	Global $widthStep = @DesktopWidth / $gridcount
+	Global $rows = 2
+
+	;_ArraySort($winHandles)
+
+	Local $windowsPerRow = Int($gridcount / $rows)
+	If Mod($gridcount, 2) = 1 Then
+		$windowsPerRow += 1
+	EndIf
+	$widthStep = @DesktopWidth / $windowsPerRow
+	Local $heightStep = $totalHeight / $rows
+	Local $winHeight = $totalHeight / $rows
+
+
+
+	For $j = 0 To $gridcount
+		Local $currentRow = Int( $j / $windowsPerRow - 0.1)
+
+		;ConsoleWrite("Row: " & $j  & ", " & $windowsPerRow & @CRLF)
+		Local $rowIndex = $j -1
+		if $j >= $windowsPerRow Then
+			$rowIndex = $j - $currentRow*$windowsPerRow -1
+		EndIf
+
+		Local $posy =  $currentRow * $heightStep - ($currentRow * $heightMargin)
+		Local $height = $winHeight + $heightMargin
+		Local $width = $widthStep + $widthOverlap / ($count +1)
+		Local $xPosAdjustment = $width / $windowsPerRow
+		Local $posx = $rowIndex * $widthStep
+
+		ConsoleWrite("Pos: " & $rowIndex  & ", " & $currentRow & ", " & $windowsPerRow & @CRLF)
+
+		if $winPositions[$j] <> 0 Then
+			WinMove($winPositions[$j], "",$posx , $posy,$width,$height)
+			ConsoleWrite("Move To: " & $posx  & ", " & $posy & " row: " & $currentRow & @CRLF)
+		EndIf
+	Next
+	;ExitLoop
 	Sleep(1000)
 WEnd
