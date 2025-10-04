@@ -9,7 +9,7 @@ Local $titles = IniReadSection("winorganizer.ini", "Windows")
 Global $bottomMargin = 35
 Global $totalHeight = @DesktopHeight-$bottomMargin
 Global $heightMargin = 50
-Global $widthOverlap = 50
+Global $widthOverlap = 100
 Const $positionsSize = 10
 
 Global $winPositions[$positionsSize+1]
@@ -116,9 +116,9 @@ While 1
 
 		Local $posy =  $currentRow * $heightStep - ($currentRow * $heightMargin)
 		Local $height = $winHeight + $heightMargin
-		Local $width = $widthStep + $widthOverlap / ($count +1)
+		Local $width = $widthStep + $widthOverlap / $count
 		Local $xPosAdjustment = $width / $windowsPerRow
-		Local $posx = $rowIndex * $widthStep
+		Local $posx = $rowIndex * ($widthStep - ($widthOverlap / $count))
 
 		ConsoleWrite("Pos: " & $rowIndex  & ", " & $currentRow & ", " & $windowsPerRow & @CRLF)
 
